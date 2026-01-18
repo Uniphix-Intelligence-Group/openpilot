@@ -126,6 +126,11 @@ class UIState:
     elif self.sm.frame - self.sm.recv_frame["pandaStates"] > 5 * rl.get_fps():
       self.panda_type = log.PandaState.PandaType.unknown
 
+    # For webcam mode, simulate ignition
+    import os
+    if os.getenv("USE_WEBCAM") is not None:
+      self.ignition = True
+
     # Handle wide road camera state updates
     if self.sm.updated["wideRoadCameraState"]:
       cam_state = self.sm["wideRoadCameraState"]
@@ -134,7 +139,12 @@ class UIState:
       self.light_sensor = -1
 
     # Update started state
-    self.started = self.sm["deviceState"].started and self.ignition
+    # For webcam mode, always set started=True when ignition is on
+    import os
+    if os.getenv("USE_WEBCAM") is not None and self.ignition:
+      self.started = True
+    else:
+      self.started = self.sm["deviceState"].started and self.ignition
 
     # Update recording audio state
     self.recording_audio = self.params.get_bool("RecordAudio") and self.started
